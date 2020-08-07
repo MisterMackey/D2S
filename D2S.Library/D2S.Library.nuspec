@@ -1,0 +1,25 @@
+<?xml version="1.0"?>
+<package >
+  <metadata>
+    <!-- Id is replaced with the Assembly Name -->
+    <id>D2S</id>
+    <!-- Version is replaced with the AssemblyInformationalVersion if defined or the AssemblyVersion -->
+    <version>3.0</version>
+    <!-- Human friendly title. Use the id or something meaningful -->
+    <title>D2S</title>
+    <authors>jasperris93@gmail.com</authors>
+    <!-- Author is replaced with AssemblyCompany which we use for owners -->
+    <owners>J Ris</owners>
+    <!-- Provide a URL to the enclosing project on Confluence, Connections or VSTS -->
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <!-- Description is replaced with AssemblyDescription -->
+    <description>This library contains classes and methods designed to perform simple ETL jobs and provide some basic logging functionality. It is intended to be used by clients using TAP or other multithreading capabilities to perform the various tasks (delegate methods) exposed by this framework</description>
+    <license type="expression">MIT</license>
+    <projectUrl>https://github.com/MisterMackey/D2S</projectUrl>
+    <!-- by Maciej Świerczek licensed under CC BY 3.0-->
+    <iconUrl>https://thenounproject.com/icon/188623/</iconUrl>
+    <releaseNotes>Made to nuget package</releaseNotes>
+    <copyright>Copyright 2020</copyright>
+    <tags>ETL Library</tags>
+  </metadata>
+</package>

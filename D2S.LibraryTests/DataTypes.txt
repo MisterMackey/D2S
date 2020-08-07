@@ -1,0 +1,3 @@
+﻿string|integer|decimal|char
+waddup|4|5.4|Y
+YO|63|8.45|N

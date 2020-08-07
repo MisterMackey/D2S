@@ -1,0 +1,6 @@
+﻿Snapshotdate=1900-01-01
+Name||Surname||Adress||Phone Number||Age
+Petey||Pete||Petesake 211||0612345678||41
+Derp||Derpson||Derptown USA||0698765432||20
+Herpina||Cristianira Fueltes the Third||Wherever||65498712||18
+RowCount=4
