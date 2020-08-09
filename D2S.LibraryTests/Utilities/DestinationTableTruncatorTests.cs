@@ -69,6 +69,7 @@ namespace D2S.Library.Utilities.Tests
         {
             DestinationTableTruncator d = new DestinationTableTruncator(pipelineContext);
             d.TruncateTable();
+            Assert.AreEqual(expected: 0, actual: CheckRowCount());
         }
 
         [TestMethod()]
@@ -76,6 +77,7 @@ namespace D2S.Library.Utilities.Tests
         {
             DestinationTableTruncator d = new DestinationTableTruncator(pipelineContext.DestinationTableName);
             d.TruncateTable();
+            Assert.AreEqual(expected: 0, actual: CheckRowCount());
         }
     }
 }
