@@ -126,6 +126,8 @@
     <Compile Include="Utilities\BoundedConcurrentQueuTests.cs" />
     <Compile Include="Utilities\DataTypeSuggesterTests.cs" />
     <Compile Include="Utilities\DestinationTableCreatorTests.cs" />
+    <Compile Include="Utilities\DestinationTableDropperTests.cs" />
+    <Compile Include="Utilities\DestinationTableTruncatorTests.cs" />
     <Compile Include="Utilities\PipelineContextTests.cs" />
     <Compile Include="Utilities\RowFactoryTests.cs" />
     <Compile Include="Utilities\RowTests.cs" />

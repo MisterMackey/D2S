@@ -12,20 +12,31 @@ namespace D2S.Library.Utilities
     /// </summary>
     public class DestinationTableTruncator
     {
-        private readonly PipelineContext Context;
+        private string DestinationTableName;
+        /// <summary>
+        /// Creates a <see cref="DestinationTableTruncator"/> using the specified  <see cref="PipelineContext"/>
+        /// </summary>
+        /// <param name="c"></param>
         public DestinationTableTruncator(PipelineContext c)
         {
-            Context = c;
+            DestinationTableName = c.DestinationTableName;
         }
-
+        /// <summary>
+        /// Creates a <see cref="DestinationTableTruncator"/> without using a <see cref="PipelineContext"/>
+        /// </summary>
+        /// <param name="destinationtableName"></param>
+        public DestinationTableTruncator(string destinationTableName)
+        {
+            DestinationTableName = destinationTableName;
+        }
         /// <summary>
         /// Truncate a table if it exists (otherwise it will throw an exception and stop the process)
         /// </summary>
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Security", "CA2100:Review SQL queries for security vulnerabilities")]
         public void TruncateTable()
         {
-            Context.DestinationTableName = Context.DestinationTableName.Replace("]", "").Replace("[", "");
-            var splitResults = Context.DestinationTableName.Split('.');
+            DestinationTableName = DestinationTableName.Replace("]", "").Replace("[", "");
+            var splitResults = DestinationTableName.Split('.');
             var schemaName = (splitResults.Count() > 0) ? splitResults[0] : string.Empty;
             if (string.IsNullOrEmpty(schemaName))
             {

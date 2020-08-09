@@ -16,10 +16,30 @@ namespace D2S.Library.Utilities
     /// </summary>
     public class DestinationTableCreator
     {
-        private readonly PipelineContext Context;
+        private string DestinationTableName;
+        private string[] ColumnNamesSelection;
+        private string[] DataTypes;
+        /// <summary>
+        /// Creates a <see cref="DestinationTableCreator"/> using the specified  <see cref="PipelineContext"/>
+        /// </summary>
+        /// <param name="c"></param>
         public DestinationTableCreator(PipelineContext c)
         {
-            Context = c;
+            DestinationTableName = c.DestinationTableName;
+            ColumnNamesSelection = c.ColumnNamesSelection;
+            DataTypes = c.DataTypes;
+        }
+        /// <summary>
+        /// Creates a <see cref="DestinationTableCreator"/> without using a <see cref="PipelineContext"/>
+        /// </summary>
+        /// <param name="destinationtableName"></param>
+        /// <param name="columns"></param>
+        /// <param name="dataTypes"></param>
+        public DestinationTableCreator(string destinationtableName, string[] columns, string[] dataTypes)
+        {
+            DestinationTableName = destinationtableName;
+            ColumnNamesSelection = columns;
+            DataTypes = dataTypes;
         }
 
         /// <summary>
@@ -29,8 +49,8 @@ namespace D2S.Library.Utilities
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Security", "CA2100:Review SQL queries for security vulnerabilities")]
         public void CreateTable()
         {
-            Context.DestinationTableName = Context.DestinationTableName.Replace("]", "").Replace("[", "");
-            var splitResults = Context.DestinationTableName.Split('.');
+            DestinationTableName = DestinationTableName.Replace("]", "").Replace("[", "");
+            var splitResults = DestinationTableName.Split('.');
             var schemaName = (splitResults.Count() > 0) ? splitResults[0] : string.Empty;
             if (string.IsNullOrEmpty(schemaName))
             {
@@ -54,19 +74,19 @@ namespace D2S.Library.Utilities
             sb.AppendLine($"CREATE TABLE [{schemaName}].[{tableName}] (");
             string Name;
             //build create statement
-            for (int i = 0; i < Context.ColumnNamesSelection.Length; i++)
+            for (int i = 0; i < ColumnNamesSelection.Length; i++)
             {
                 // escape brackets inside column names
-                if (Context.ColumnNamesSelection[i].Contains("]"))
+                if (ColumnNamesSelection[i].Contains("]"))
                 {
-                    Name = Context.ColumnNamesSelection[i].Replace("]", "]]");
+                    Name = ColumnNamesSelection[i].Replace("]", "]]");
                 }
                 else
                 {
-                    Name = Context.ColumnNamesSelection[i];
+                    Name = ColumnNamesSelection[i];
                 }
                 //build create column statement
-                sb.AppendLine("[" + Name + "]" + " " + Context.DataTypes[i] + ",");
+                sb.AppendLine("[" + Name + "]" + " " + DataTypes[i] + ",");
             }
             sb.Remove(sb.Length - 3, 1);
             sb.Append(")");

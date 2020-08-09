@@ -12,10 +12,22 @@ namespace D2S.Library.Utilities
     /// </summary>
     public class DestinationTableDropper
     {
-        private readonly PipelineContext Context;
+        private string DestinationTableName;
+        /// <summary>
+        /// Creates a <see cref="DestinationTableDropper"/> using the specified  <see cref="PipelineContext"/>
+        /// </summary>
+        /// <param name="c"></param>
         public DestinationTableDropper(PipelineContext c)
         {
-            Context = c;
+            DestinationTableName = c.DestinationTableName;
+        }
+        /// <summary>
+        /// Creates a <see cref="DestinationTableDropper"/> without using a <see cref="PipelineContext"/>
+        /// </summary>
+        /// <param name="destinationtableName"></param>
+        public DestinationTableDropper(string destinationTableName)
+        {
+            DestinationTableName = destinationTableName;
         }
 
         /// <summary>
@@ -24,8 +36,8 @@ namespace D2S.Library.Utilities
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Security", "CA2100:Review SQL queries for security vulnerabilities")]
         public void DropTable()
         {
-            Context.DestinationTableName = Context.DestinationTableName.Replace("]", "").Replace("[", "");
-            var splitResults = Context.DestinationTableName.Split('.');
+            DestinationTableName = DestinationTableName.Replace("]", "").Replace("[", "");
+            var splitResults = DestinationTableName.Split('.');
             var schemaName = (splitResults.Count() > 0) ? splitResults[0] : string.Empty;
             if (string.IsNullOrEmpty(schemaName))
             {
