@@ -4,7 +4,7 @@
     <!-- Id is replaced with the Assembly Name -->
     <id>D2S</id>
     <!-- Version is replaced with the AssemblyInformationalVersion if defined or the AssemblyVersion -->
-    <version>3.0</version>
+    <version>3.0.1</version>
     <!-- Human friendly title. Use the id or something meaningful -->
     <title>D2S</title>
     <authors>jasperris93@gmail.com</authors>
