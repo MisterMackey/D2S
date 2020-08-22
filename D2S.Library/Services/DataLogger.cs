@@ -96,7 +96,7 @@
                 catch (Exception ex)
                 {
                     LogService.Instance.Error(ex);
-                    throw new ApplicationException("Exception : " + ex.Message);
+                    throw;
                 }
             }
         }
@@ -132,12 +132,12 @@
                 catch (SqlException sqlEx)
                 {
                     LogService.Instance.Error(sqlEx);
-                    throw new ApplicationException("SqlException : " + sqlEx.Message);
+                    throw;
                 }
                 catch (Exception ex)
                 {
                     LogService.Instance.Error(ex);
-                    throw new ApplicationException("Exception : " + ex.Message);
+                    throw;
                 }
 
                 _hasOpenLogEntry = false;
