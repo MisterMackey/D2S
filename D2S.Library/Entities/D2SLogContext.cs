@@ -22,6 +22,10 @@ namespace D2S.Library.Entities
                 this.Configuration.ValidateOnSaveEnabled = false;
                 Database.SetInitializer<D2SLogContext>(null);
             }
+            else
+            {
+                Database.Initialize(true);
+            }
         }
 
 

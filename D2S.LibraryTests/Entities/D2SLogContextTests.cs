@@ -5,6 +5,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Data.SqlClient;
+using System.Data.Entity.Core;
 
 namespace D2S.Library.Entities.Tests
 {
@@ -31,7 +33,7 @@ namespace D2S.Library.Entities.Tests
         [TestMethod()]
         public void DbMakeChangesTest()
         {
-            var context = new D2SLogContext(DeployDatabaseIfNotExist:true);
+            var context = new D2SLogContext(DeployDatabaseIfNotExist: true);
             var a = context.RunLogEntries;
             var b = context.taskLogEntries;
 
@@ -58,6 +60,24 @@ namespace D2S.Library.Entities.Tests
 
             a.Add(entry);
             context.SaveChanges();
+        }
+
+        [TestMethod()]
+        public void UndesiredDatabaseMigrationPreventionTest()
+        {
+            //drop the DB first, or at least make sure its gone
+            var c = new D2SLogContext(true);
+            c.Database.Delete();
+            c.SaveChanges();
+            c.Dispose();
+
+            var context = new D2SLogContext(false);
+            Assert.ThrowsException<EntityException>(() => addTask(context));
+        }
+        private void addTask(D2SLogContext c)
+        {
+            c.RunLogEntries.Add(new RunLogEntry());
+            c.SaveChanges();
         }
     }
 }
