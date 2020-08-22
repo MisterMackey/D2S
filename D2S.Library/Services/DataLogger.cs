@@ -3,6 +3,9 @@
     using System;
     using System.Data.SqlClient;
     using System.Data;
+    using D2S.Library.Entities;
+    using System.Collections.Generic;
+    using System.Linq;
 
     /// <summary>
     /// Logging database related functionality
@@ -17,40 +20,7 @@
         private static readonly object SyncRoot = new object();
 
         private bool _hasOpenLogEntry;
-        private int _LogId;
-        //following datatables are used to buffer log messages before they are written to sql
-        private static DataTable _SqlTaskLog;
-        private static DataTable _SqlErrorLog;
-        private static SqlBulkCopyColumnMapping[] _SqlTaskLogMappings = new SqlBulkCopyColumnMapping[]
-            {new SqlBulkCopyColumnMapping(0,1),
-            new SqlBulkCopyColumnMapping(1,2),
-            new SqlBulkCopyColumnMapping(2,3),
-            new SqlBulkCopyColumnMapping(3,4),
-            new SqlBulkCopyColumnMapping(4,5),
-            new SqlBulkCopyColumnMapping(5,6)
-            };
-        private static SqlBulkCopyColumnMapping[] _SqlErrorLogMappings = new SqlBulkCopyColumnMapping[]
-            {new SqlBulkCopyColumnMapping(0,1),
-            new SqlBulkCopyColumnMapping(1,2),
-            new SqlBulkCopyColumnMapping(2,3),
-            new SqlBulkCopyColumnMapping(3,4),
-            new SqlBulkCopyColumnMapping(4,5),
-            new SqlBulkCopyColumnMapping(5,6)
-            };
-        private static DataColumn[] _sqlTaskLogColumns = new DataColumn[]
-            {new DataColumn("Package_Log_ID", typeof(int)),
-            new DataColumn("Source_Name", typeof(string)),
-            new DataColumn("Source_ID", typeof(Guid)),
-            new DataColumn("Start_DateTime", typeof(DateTime)),
-            new DataColumn("End_DateTime", typeof(DateTime)),
-            new DataColumn("LogMessage", typeof(string)) };
-        private static DataColumn[] _sqlErrorLogColumns = new DataColumn[]
-            {new DataColumn("Package_Log_ID", typeof(int)),
-            new DataColumn("Source_Name", typeof(string)),
-            new DataColumn("Source_ID", typeof(Guid)),
-            new DataColumn("Error_Code", typeof(int)),
-            new DataColumn("Error_Description", typeof(string)),
-            new DataColumn("Log_DateTime", typeof(DateTime)) };
+        private RunLogEntry _runLogEntry;
         #endregion Members
 
         #region Properties
@@ -100,79 +70,28 @@
         /// <summary>
         /// Opens a log entry for a run. Call CloseLogEntry before opening a new entry.
         /// </summary>
-        public void OpenLogEntry()
+        public void OpenLogEntry(string Source, string Target)
         {
             if (_hasOpenLogEntry)
             {
-                var outputMessage = $"Log entry is already opened with ID {_LogId}";
+                var outputMessage = $"A log entry is already open, please close the log for the current run before opening a new one";
                 LogService.Instance.Error(outputMessage);
                 throw new InvalidOperationException(outputMessage);
             }
             else
             {
-                //instantiate the parameters required to open the log entry
-                int packageVersionId = 1; //not really applicable for our apps so we just default it i guess
-                Guid guid = new Guid("a47d7764-645e-4537-bb37-0540882e33c2"); //taken from assembly info
-                string machineName;
-
-                if ((machineName = Environment.GetEnvironmentVariable("computername")) != null)
-                {
-
-                }
-                else
-                {
-                    machineName = "Unknown";
-                }
-
-                string userName = System.Security.Principal.WindowsIdentity.GetCurrent().Name;
-                DateTime startDatTime = DateTime.Now;
-                string status = "Running";
-
                 try
                 {
-                    using (SqlConnection conn = new SqlConnection(ConfigVariables.Instance.ConfiguredConnection))
+                    _hasOpenLogEntry = true;
+                    _runLogEntry = new RunLogEntry()
                     {
-                        conn.Open();
-                        using (SqlCommand comm = new SqlCommand())
-                        {
-                            comm.Connection = conn;
-                            comm.CommandType = CommandType.StoredProcedure;
-                            comm.CommandText = "dbo.usp_Add_Entry_To_Package_Log";
-                            comm.Parameters.AddWithValue("@versionId", packageVersionId);
-                            comm.Parameters.AddWithValue("@GUID", guid);
-                            comm.Parameters.AddWithValue("@Machine_Name", machineName);
-                            comm.Parameters.AddWithValue("@UserId", userName);
-                            comm.Parameters.AddWithValue("@StartDateTime", startDatTime);
-                            comm.Parameters.AddWithValue("@status", status);
-                            SqlParameter returnparam = new SqlParameter("@ReturnVal", SqlDbType.Int);
-                            returnparam.Direction = ParameterDirection.ReturnValue;
-                            comm.Parameters.Add(returnparam);
-
-                            comm.ExecuteNonQuery();
-
-                            int newId;
-                            try
-                            {
-                                newId = (int)returnparam.Value;
-                            }
-                            catch
-                            {
-                                newId = 0;
-                            }
-
-                            _hasOpenLogEntry = true;
-                            _LogId = newId;
-
-                            comm.Dispose();
-                        }
-
-                        conn.Close();
-                    }
-                }
-                catch (SqlException sqlEx)
-                {
-                    LogService.Instance.Error(sqlEx);
-                    throw new ApplicationException("SqlException : " + sqlEx.Message);
+                        Source = Source, Target = Target,
+                        MachineName = Environment.MachineName,
+                        UserName = $"{Environment.UserDomainName}\\{Environment.UserName}",
+                        Status = "Open",
+                        StartTime = DateTime.Now,
+                        Tasks = new List<TaskLogEntry>()
+                    };
                 }
                 catch (Exception ex)
                 {
@@ -186,7 +105,7 @@
         /// Closes the previously opened logentry with either a success or failure code. 
         /// </summary>
         /// <remarks>
-        /// If this method or <see cref="DataLogger.FlushSqlLogMessages"/> is not called, any log entries written will be lost.
+        /// If this method  is not called, any log entries written will be lost.
         /// </remarks>
         /// <param name="processWasSuccessfull">A bool indicating if the process has completed successfully</param>
         public void CloseLogEntry(bool processWasSuccessfull)
@@ -199,31 +118,16 @@
             }
             else
             {
-                //clear buffered messages
-                FlushSqlLogMessages();
                 DateTime endTime = DateTime.Now;
                 string status = processWasSuccessfull ? "SUCCESS" : "FAILED";
 
                 try
                 {
-                    using (SqlConnection conn = new SqlConnection(ConfigVariables.Instance.ConfiguredConnection))
-                    {
-                        conn.Open();
-
-                        using (SqlCommand comm = new SqlCommand())
-                        {
-                            comm.Connection = conn;
-                            comm.CommandText = "update ssis.package_log set End_DateTime = @end, Status = @status where Package_Log_Id = @logId";
-                            comm.Parameters.AddWithValue("@end", endTime);
-                            comm.Parameters.AddWithValue("@status", status);
-                            comm.Parameters.AddWithValue("@logId", _LogId);
-                            comm.ExecuteNonQuery();
-
-                            comm.Dispose();
-                        }
-
-                        conn.Close();
-                    }
+                    _runLogEntry.Status = status;
+                    _runLogEntry.EndTime = endTime;
+                    D2SLogContext context = new D2SLogContext(false);
+                    context.RunLogEntries.Add(_runLogEntry);
+                    context.SaveChanges();
                 }
                 catch (SqlException sqlEx)
                 {
@@ -237,73 +141,15 @@
                 }
 
                 _hasOpenLogEntry = false;
-                _LogId = 0;
             }
         }
 
         /// <summary>
-        /// Clears buffered messages and writes them to SQL. 
+        /// Logs a message from the given taskName to sql log table. Call MarkTaskAsComplete afterwards to fill the end datetime field.
         /// </summary>
-        public void FlushSqlLogMessages()
-        {
-            if (_SqlTaskLog == null && _SqlErrorLog == null) { }
-            else
-            {
-                try
-                { 
-                    using (SqlConnection conn = new SqlConnection(ConfigVariables.Instance.ConfiguredConnection))
-                    {
-                        conn.Open();
-
-                        using (SqlBulkCopy sbc = new SqlBulkCopy(conn))
-                        {
-                            if (_SqlTaskLog != null)
-                            {
-                                foreach (var mapping in _SqlTaskLogMappings)
-                                {
-                                    sbc.ColumnMappings.Add(mapping);
-                                }
-                                sbc.DestinationTableName = _SqlTaskLog.Namespace + "." + _SqlTaskLog.TableName;
-                            
-                                sbc.WriteToServer(_SqlTaskLog);
-                            }
-                            if (_SqlErrorLog != null)
-                            {
-                                sbc.ColumnMappings.Clear();
-                                foreach (var mapping in _SqlErrorLogMappings)
-                                {
-                                    sbc.ColumnMappings.Add(mapping);
-                                }
-                                sbc.DestinationTableName = _SqlErrorLog.Namespace + "." + _SqlErrorLog.TableName;
-
-                                sbc.WriteToServer(_SqlErrorLog);
-                            }
-
-                            sbc.Close();
-                        }
-
-                        conn.Close();
-                    }
-                }
-                catch (SqlException sqlEx)
-                {
-                    LogService.Instance.Error(sqlEx);
-                    throw new ApplicationException("SqlException : " + sqlEx.Message);
-                }
-                catch (Exception ex)
-                {
-                    LogService.Instance.Error(ex);
-                    throw new ApplicationException("Exception : " + ex.Message);
-                }
-            }
-        }
-
-        /// <summary>
-        /// Logs a message from the given source to sql log table. Call MarkTaskAsComplete afterwards to fill the end datetime field.
-        /// </summary>
-        /// <param name="sourceName">the source of the log message</param>
-        /// <param name="message">the log message</param>
-        public void LogTaskToSql(string sourceName, string message)
+        /// <param name="taskName">the source of the log message</param>
+        /// <param name="target">the log message</param>
+        public void LogTaskToSql(string taskName, string target)
         {
             if (!_hasOpenLogEntry)
             {
@@ -313,27 +159,22 @@
             }
             else
             {
-                if (_SqlTaskLog == null)
+                _runLogEntry.Tasks.Add(new TaskLogEntry()
                 {
-                    _SqlTaskLog = new DataTable("Package_Task_Log", "ssis");
-                    _SqlTaskLog.Columns.AddRange(_sqlTaskLogColumns);
-                }
-                DataRow newRow = _SqlTaskLog.NewRow();
-                newRow[0] = _LogId;
-                newRow[1] = sourceName;
-                newRow[2] = DBNull.Value;
-                newRow[3] = DateTime.Now;
-                newRow[4] = DBNull.Value;
-                newRow[5] = message;
-                _SqlTaskLog.Rows.Add(newRow);
+                    TaskName = taskName,
+                    Target = target,
+                    Status = "Open",
+                    StartTime = DateTime.Now
+                });
             }
         }
 
         /// <summary>
-        /// Finds the task log entry with the given sourcename and sets the End_Time field to the current datetime
+        /// Finds the task log entry with the given taskName and sets the End_Time field to the current datetime and the status flag.
+        /// Also optionally sets a message string
         /// </summary>
-        /// <param name="sourceName">the source name of an existing log entry</param>
-        public void MarkTaskAsComplete(string sourceName)
+        /// <param name="taskName">the source name of an existing log entry</param>
+        public void MarkTaskAsComplete(string taskName, bool processWasSuccessfull, string message)
         {
             if (!_hasOpenLogEntry)
             {
@@ -345,48 +186,23 @@
             {
 
                 //find the log entry if it exists
-                bool success = false;
-                foreach (DataRow row in _SqlTaskLog.Rows)
+                TaskLogEntry entry = _runLogEntry.Tasks.Where(x => x.TaskName == taskName).FirstOrDefault();
+                
+                if (entry == null)
                 {
-                    if ((string)row[1] == sourceName)
-                    {
-                        row[4] = DateTime.Now;
-                        success = true;
-                        break;
-                    }
+                    LogService.Instance.Warn("Attempted to close a task entry that did not exist: " + taskName);
                 }
-                if (!success)
+                else
                 {
-                    LogService.Instance.Warn("Attempted to close a log entry that did not exist: " + sourceName);
+                    string status = processWasSuccessfull ? "SUCCESS" : "FAILED";
+                    entry.EndTime = DateTime.Now;
+                    entry.Message = message;
+                    entry.Status = status;                    
                 }
             }
         }
 
-        public void LogErrorToSql(string sourceName, string message, int errorCode)
-        {
-            if (!_hasOpenLogEntry)
-            {
-                var outputMessage = "Attempted to log a task when no log entry was opened";
-                LogService.Instance.Error(outputMessage);
-                throw new InvalidOperationException(outputMessage);
-            }
-            else
-            {
-                if (_SqlErrorLog == null)
-                {
-                    _SqlErrorLog = new DataTable("Package_Error_Log", "ssis");
-                    _SqlErrorLog.Columns.AddRange(_sqlErrorLogColumns);
-                }
-                DataRow newRow = _SqlErrorLog.NewRow();
-                newRow[0] = _LogId;
-                newRow[1] = sourceName;
-                newRow[2] = DBNull.Value;
-                newRow[3] = errorCode;
-                newRow[4] = message;
-                newRow[5] = DateTime.Now;
-                _SqlErrorLog.Rows.Add(newRow);
-            }
-        }
+
         #endregion
 
         #endregion Methods

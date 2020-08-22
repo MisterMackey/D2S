@@ -17,6 +17,10 @@ namespace D2S.Library.Entities
         public D2SLogContext(bool DeployDatabaseIfNotExist =false) : base(ConnString())
         {
             this.DeployDatabaseIfNotExist = DeployDatabaseIfNotExist;
+            if (!DeployDatabaseIfNotExist)
+            {
+
+            }
         }
 
         protected override void OnModelCreating(DbModelBuilder modelBuilder)

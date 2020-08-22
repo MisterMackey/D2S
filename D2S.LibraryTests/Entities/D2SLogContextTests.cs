@@ -15,6 +15,7 @@ namespace D2S.Library.Entities.Tests
         public void D2SLogContextTest()
         {
             var context = new D2SLogContext();
+            Assert.IsNotNull(context);
         }
 
         [TestMethod()]
@@ -23,6 +24,8 @@ namespace D2S.Library.Entities.Tests
             var context = new D2SLogContext();
             var a = context.RunLogEntries;
             var b = context.taskLogEntries;
+            Assert.IsNotNull(a);
+            Assert.IsNotNull(b);
         }
 
         [TestMethod()]

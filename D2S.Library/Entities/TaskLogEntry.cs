@@ -15,6 +15,7 @@ namespace D2S.Library.Entities
         public string TaskName { get; set; }
         public string Target { get; set; }
         public string Status { get; set; }
+        public string Message { get; set; }
         public DateTime StartTime { get; set; }
         public DateTime? EndTime { get; set; }
 
