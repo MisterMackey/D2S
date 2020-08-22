@@ -146,6 +146,9 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Entities\D2SLogContext.cs" />
+    <Compile Include="Entities\RunLogEntry.cs" />
+    <Compile Include="Entities\TaskLogEntry.cs" />
     <Compile Include="Extractors\ConcurrentExcelReader.cs" />
     <Compile Include="Extractors\ConcurrentFlatFileExtractor.cs" />
     <Compile Include="Extractors\ConcurrentSqlExtractor.cs" />

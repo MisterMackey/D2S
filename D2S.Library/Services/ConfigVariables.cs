@@ -16,9 +16,9 @@
         #region Connection strings
 
         /// <summary>
-        /// Connection string for Entity Framework
+        /// Connection string for logging db
         /// </summary>
-        public string LiqudityDatabase { get; set; }
+        public string LoggingDatabaseConnectionString { get; set; }
 
         /// <summary>
         /// Connection string for direct SQL commands
@@ -95,7 +95,7 @@
 		{
             #region Connection strings
 
-            LiqudityDatabase = ConfigService.Instance.GetConnectionString("LiqudityDatabase");
+            LoggingDatabaseConnectionString = ConfigService.Instance.GetConnectionString("LoggingDatabaseConnectionString");
             ConfiguredConnection = ConfigService.Instance.GetConnectionString("ConfiguredConnection");
 
             #endregion Connection strings

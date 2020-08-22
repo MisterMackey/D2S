@@ -96,9 +96,9 @@
 
         #region Methods
 
-        #region Liq_Dwh_Logger
+        #region Logger
         /// <summary>
-        /// Opens a log entry that will be written to ssis.package_log in the liquidity database. The DataLogger class will keep track of this entry and update it and related records in related tables. Call CloseLogEntry before opening a new entry.
+        /// Opens a log entry for a run. Call CloseLogEntry before opening a new entry.
         /// </summary>
         public void OpenLogEntry()
         {
