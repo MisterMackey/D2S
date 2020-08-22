@@ -19,18 +19,11 @@ namespace D2S.Library.Entities
             this.DeployDatabaseIfNotExist = DeployDatabaseIfNotExist;
             if (!DeployDatabaseIfNotExist)
             {
-
+                this.Configuration.ValidateOnSaveEnabled = false;
+                Database.SetInitializer<D2SLogContext>(null);
             }
         }
 
-        protected override void OnModelCreating(DbModelBuilder modelBuilder)
-        {
-            if (!DeployDatabaseIfNotExist)
-            {
-                throw new UnintentionalCodeFirstException("The application attempted to deploy the logging database without the necessary flag." +
-                    " Please provide the DeployDatabaseIfNotExist parameter and set the value to true if you intend to deploy the database"); 
-            }
-        }
 
         public DbSet<RunLogEntry> RunLogEntries { get; set; }
         public DbSet<TaskLogEntry> taskLogEntries { get; set; }

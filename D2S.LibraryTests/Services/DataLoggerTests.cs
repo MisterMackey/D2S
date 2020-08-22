@@ -48,7 +48,18 @@ namespace D2S.Library.Services.Tests
         [TestMethod()]
         public void LogTaskToSqlAndMarkCompleteTest()
         {
-            Assert.Fail();
+            var dl = DataLogger.Instance;
+            //check if exceptions are being thrown when needed
+            Assert.ThrowsException<InvalidOperationException>(
+                () => dl.LogTaskToSql("", ""));
+            Assert.ThrowsException<InvalidOperationException>(
+                () => dl.MarkTaskAsComplete("", true, ""));
+            //open entry to hold the task logs
+            dl.OpenLogEntry("Test", "Testing the task logging");
+            //add some tasks
+            dl.LogTaskToSql("Task number 1", "Checking if i can log a succesfull task");
+            dl.LogTaskToSql("Task number 2", "Checking if i can log an unsuccessfull task");
+            //try to close them 
         }
 
     }
