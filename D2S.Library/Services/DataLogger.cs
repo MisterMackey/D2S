@@ -51,6 +51,8 @@
             }
         }
 
+        public bool SqlLogEnabled { get; private set; }
+
         #endregion Properties
 
         #region Events
@@ -60,6 +62,26 @@
         /// </summary>
         public DataLogger()
         {
+            LogService.Instance.Info("Checking availability of SQL log DB.");
+            SqlLogEnabled = CheckSqlConnection();
+            string msg = SqlLogEnabled ? "SQL log DB available" : "SQL log DB is not available. Logging will be disabled.";
+            LogService.Instance.Info(msg);
+        }
+
+        private bool CheckSqlConnection()
+        {
+            using (SqlConnection con = new SqlConnection(ConfigVariables.Instance.LoggingDatabaseConnectionString))
+            {
+                try
+                {
+                    con.Open();
+                    return true;
+                }
+                catch
+                {
+                    return false;
+                }
+            }
         }
 
         #endregion Events
@@ -72,6 +94,10 @@
         /// </summary>
         public void OpenLogEntry(string Source, string Target)
         {
+            if (!SqlLogEnabled)
+            {
+                return;
+            }
             if (_hasOpenLogEntry)
             {
                 var outputMessage = $"A log entry is already open, please close the log for the current run before opening a new one";
@@ -110,6 +136,10 @@
         /// <param name="processWasSuccessfull">A bool indicating if the process has completed successfully</param>
         public void CloseLogEntry(bool processWasSuccessfull)
         {
+            if (!SqlLogEnabled)
+            {
+                return;
+            }
             if (!_hasOpenLogEntry)
             {
                 var outputMessage = "Attempted to close a log entry when no log entry was open";
@@ -151,6 +181,10 @@
         /// <param name="target">the log message</param>
         public void LogTaskToSql(string taskName, string target)
         {
+            if (!SqlLogEnabled)
+            {
+                return;
+            }
             if (!_hasOpenLogEntry)
             {
                 var outputMessage = "Attempted to log a task when no log entry was opened";
@@ -176,6 +210,10 @@
         /// <param name="taskName">the source name of an existing log entry</param>
         public void MarkTaskAsComplete(string taskName, bool processWasSuccessfull, string message)
         {
+            if (!SqlLogEnabled)
+            {
+                return;
+            }
             if (!_hasOpenLogEntry)
             {
                 var outputMessage = "Attempted to log a task when no log entry was opened";
